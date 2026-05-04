@@ -3,8 +3,8 @@ import json
 
 st.set_page_config(page_title="IG Unfollow Tracker", page_icon="🕵️‍♂️", layout="wide")
 
-st.title("🕵️‍♂️ เครื่องมือเช็คยอด Follower Instagram")
-st.subheader("เปรียบเทียบข้อมูลได้แม่นยำ 100% (ฉบับแก้ไขโครงสร้างไฟล์)")
+st.title("🕵️‍♂️ สแกนยอดติดตามใน Instagram กัน 😊👈🏻")
+st.subheader("ใครไม่ฟอลเรากลับ โดนแน่😠")
 
 # ฟังก์ชันสกัดชื่อที่ปรับปรุงมาเพื่อไฟล์ของเพื่อนโดยเฉพาะ
 def extract_instagram_users(data):
@@ -68,12 +68,12 @@ if file_following and file_followers:
 
         res_col1, res_col2 = st.columns(2)
         with res_col1:
-            st.error(f"❌ เขาไม่ฟอลเรากลับ ({len(not_back)} คน)")
+            st.error(f"❌ คนใจร้ายไม่ฟอลกลับ ({len(not_back)} คน)")
             for user in not_back:
                 st.markdown(f"👉 [{user}](https://instagram.com/{user})")
         
         with res_col2:
-            st.warning(f"⚠️ เราไม่ได้ฟอลเขากลับ ({len(i_not_back)} คน)")
+            st.warning(f"⚠️ แหะๆ ลืมฟอลกลับ ({len(i_not_back)} คน)")
             for user in i_not_back:
                 st.markdown(f"✅ [{user}](https://instagram.com/{user})")
 
