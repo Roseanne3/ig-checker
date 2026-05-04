@@ -1,105 +1,106 @@
 import streamlit as st
 import json
 
-# ตั้งค่าหน้าเว็บแบบกว้างและชื่อเท่ๆ
-st.set_page_config(page_title="IG Insights Pro", page_icon="📈", layout="wide")
+# 1. ตั้งค่าหน้าเว็บให้ดูทันสมัย
+st.set_page_config(page_title="IG Insight Pro", page_icon="📸", layout="wide")
 
-# คลุมโทนด้วย CSS (Custom Styling)
+# 2. ใส่ CSS ตกแต่งให้เหมือนแอปมือถือหรูๆ
 st.markdown("""
     <style>
-    .main { background-color: #f0f2f6; }
-    .stMetric { background-color: #ffffff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .main { background-color: #fafafa; }
+    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
     .user-card { 
-        padding: 10px; border-radius: 10px; background-color: white; 
-        margin-bottom: 8px; border-left: 5px solid #E1306C;
-        transition: transform 0.2s;
+        padding: 12px; border-radius: 12px; background-color: white; 
+        margin-bottom: 10px; border-left: 6px solid #E1306C;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
-    .user-card:hover { transform: scale(1.02); }
+    .stButton>button { width: 100%; border-radius: 10px; background-color: #E1306C; color: white; }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("📸 IG Follower Analytics Pro")
-st.markdown("---")
+st.write("เช็คคนไม่ฟอลกลับได้แม่นยำ ปลอดภัย ไม่ใช้รหัสผ่าน")
 
-with st.sidebar:
-    st.header("🚀 Dashboard Control")
-    st.write("อัปโหลดไฟล์เพื่อปลดล็อกฟีเจอร์")
-    file_ing = st.file_uploader("📥 Following JSON", type="json")
-    file_ers = st.file_uploader("📥 Followers JSON", type="json")
-    st.divider()
-    st.caption("ข้อมูลของคุณจะถูกประมวลผลบน Browser เท่านั้น ปลอดภัย 100%")
+# 3. ส่วนอัปโหลดไฟล์ (เอามาไว้ตรงกลางให้เห็นชัดๆ!)
+st.info("📌 ขั้นตอนแรก: อัปโหลดไฟล์ .json ของคุณที่นี่")
+up_col1, up_col2 = st.columns(2)
+with up_col1:
+    file_ing = st.file_uploader("📥 เลือกไฟล์ following.json", type="json")
+with up_col2:
+    file_ers = st.file_uploader("📥 เลือกไฟล์ followers_1.json", type="json")
 
-def extract_users(data):
+# 4. ฟังก์ชันขุดข้อมูล (ตัวเก่งที่เช็คทั้ง title และ value)
+def extract_instagram_users(data):
     users = set()
     if isinstance(data, dict):
         for key in data:
             if isinstance(data[key], list):
                 for item in data[key]:
-                    if 'title' in item: users.add(item['title'])
-                    try: users.add(item['string_list_data'][0]['value'])
+                    if 'title' in item and item['title']: users.add(item['title'])
+                    try:
+                        val = item['string_list_data'][0]['value']
+                        if val: users.add(val)
                     except: pass
     elif isinstance(data, list):
         for item in data:
-            try: users.add(item['string_list_data'][0]['value'])
+            try:
+                val = item['string_list_data'][0]['value']
+                if val: users.add(val)
             except: pass
-            if 'title' in item: users.add(item['title'])
+            if 'title' in item and item['title']: users.add(item['title'])
     users.discard("")
     return users
 
+# 5. ส่วนประมวลผลและแสดงผล
 if file_ing and file_ers:
     try:
-        data_ing = json.load(file_ing)
-        data_ers = json.load(file_ers)
-        following = extract_users(data_ing)
-        followers = extract_users(data_ers)
-        
-        not_back = sorted(list(following - followers))
-        i_not_back = sorted(list(followers - following))
+        with st.spinner('กำลังวิเคราะห์ข้อมูล...'):
+            data_ing = json.load(file_ing)
+            data_ers = json.load(file_ers)
+            following = extract_instagram_users(data_ing)
+            followers = extract_instagram_users(data_ers)
+            
+            not_back = sorted(list(following - followers))
+            i_not_back = sorted(list(followers - following))
 
-        # --- ส่วนของ Visual Metrics ---
-        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-        col_m1.metric("Following", len(following))
-        col_m2.metric("Followers", len(followers))
-        col_m3.metric("Not Following Back", len(not_back), delta=f"{len(not_back)} users", delta_color="inverse")
-        col_m4.metric("You Don't Follow back", len(i_not_back))
+        # แสดงตัวเลขสรุปสวยๆ
+        st.divider()
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Following (ตามเขา)", len(following))
+        m2.metric("Followers (เขาตาม)", len(followers))
+        m3.metric("ใจร้าย (ไม่ฟอลกลับ)", len(not_back))
 
-        st.markdown("### 🔍 Detailed Analysis")
-        tab1, tab2 = st.tabs(["❌ คนที่ไม่ฟอลกลับ", "⚠️ เรายังไม่ฟอลกลับ"])
+        st.markdown("### 🔍 ผลการวิเคราะห์")
+        tab1, tab2 = st.tabs([f"❌ เขาไม่ฟอลเรา ({len(not_back)})", f"⚠️ เราไม่ฟอลเขา ({len(i_not_back)})"])
 
         with tab1:
-            st.info(f"มีทั้งหมด {len(not_back)} คนที่คุณติดตามแต่เขาไม่ได้ติดตามคุณ")
-            # แบ่งเป็น Grid 3 คอลัมน์เพื่อความสวยงาม
-            cols = st.columns(3)
-            for idx, user in enumerate(not_back):
-                with cols[idx % 3]:
-                    st.markdown(f"""
-                        <div class="user-card">
-                            <small>Username</small><br>
-                            <b><a href="https://www.instagram.com/{user}/" target="_blank" style="color: #E1306C; text-decoration: none;">@{user}</a></b>
-                        </div>
-                    """, unsafe_allow_html=True)
+            if not_back:
+                cols = st.columns(3)
+                for idx, user in enumerate(not_back):
+                    with cols[idx % 3]:
+                        st.markdown(f'<div class="user-card"><small>Username</small><br><b><a href="https://www.instagram.com/{user}/" target="_blank" style="color: #E1306C; text-decoration: none;">@{user}</a></b></div>', unsafe_allow_html=True)
+            else:
+                st.success("ว้าว! ทุกคนที่คุณติดตาม เขาก็ติดตามคุณกลับหมดเลย")
 
         with tab2:
-            st.success(f"มีทั้งหมด {len(i_not_back)} คนที่ฟอลคุณแต่คุณยังไม่ได้ฟอลกลับ")
-            cols = st.columns(3)
-            for idx, user in enumerate(i_not_back):
-                with cols[idx % 3]:
-                    st.markdown(f"""
-                        <div class="user-card" style="border-left: 5px solid #28a745;">
-                            <small>Username</small><br>
-                            <b><a href="https://www.instagram.com/{user}/" target="_blank" style="color: #28a745; text-decoration: none;">@{user}</a></b>
-                        </div>
-                    """, unsafe_allow_html=True)
+            if i_not_back:
+                cols = st.columns(3)
+                for idx, user in enumerate(i_not_back):
+                    with cols[idx % 3]:
+                        st.markdown(f'<div class="user-card" style="border-left-color: #28a745;"><small>Username</small><br><b><a href="https://www.instagram.com/{user}/" target="_blank" style="color: #28a745; text-decoration: none;">@{user}</a></b></div>', unsafe_allow_html=True)
+            else:
+                st.write("ไม่มีคนตกค้างที่คุณยังไม่ได้ฟอลกลับ")
 
     except Exception as e:
-        st.error(f"Error parsing data: {e}")
+        st.error(f"เกิดข้อผิดพลาดในการอ่านไฟล์: {e}")
 else:
-    # หน้าจอ Welcome ตอนยังไม่อัปโหลด
-    st.container()
-    col_l, col_r = st.columns(2)
-    with col_l:
-        st.image("https://cdn-icons-png.flaticon.com/512/3955/3955024.png", width=200)
-    with col_r:
-        st.markdown("### ยินดีต้อนรับสู่โปรแกรมวิเคราะห์ IG")
-        st.write("กรุณาอัปโหลดไฟล์จากเมนูด้านซ้ายเพื่อเริ่มวิเคราะห์ข้อมูลแบบเจาะลึก")
-        
+    # หน้าต้อนรับตอนยังไม่ได้อัปโหลด
+    st.divider()
+    st.markdown("""
+    ### 💡 วิธีใช้งานเบื้องต้น
+    1. อัปโหลดไฟล์ที่ได้จาก Instagram ทั้งสองไฟล์ข้างบน
+    2. ระบบจะทำการเปรียบเทียบชื่อให้โดยอัตโนมัติ
+    3. รายชื่อจะปรากฏขึ้นมาพร้อมลิงก์ที่คลิกไปหน้าโปรไฟล์ได้ทันที
+    """)
+    st.warning("หมายเหตุ: ข้อมูลของคุณจะไม่ถูกเก็บไว้ในเซิร์ฟเวอร์ จะถูกประมวลผลสดๆ บนหน้าเว็บนี้เท่านั้น")
+                    
