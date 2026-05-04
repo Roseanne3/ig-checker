@@ -70,7 +70,7 @@ if file_following and file_followers:
         with res_col1:
             st.error(f"❌ คนใจร้ายไม่ฟอลกลับ ({len(not_back)} คน)")
             for user in not_back:
-                st.markdown(f"👉 [{user}](https://instagram.com/{user})")
+                st.markdown(f"👉 [{user}](https://www.instagram.com/{user}/)")
         
         with res_col2:
             st.warning(f"⚠️ แหะๆ ลืมฟอลกลับ ({len(i_not_back)} คน)")
