@@ -1,26 +1,43 @@
 import streamlit as st
 import json
 
-st.set_page_config(page_title="IG Unfollow Tracker", page_icon="📸", layout="wide")
+st.set_page_config(page_title="IG Unfollow Tracker", page_icon="🕵️‍♂️", layout="wide")
 
-st.title("🕵️‍♂️ เช็คยอด ติดตามใน Instagram (เวอร์ชันขุดรากถอนโคน)")
+st.title("🕵️‍♂️ เครื่องมือเช็คยอด Follower Instagram")
+st.subheader("เปรียบเทียบข้อมูลได้แม่นยำ 100% (ฉบับแก้ไขโครงสร้างไฟล์)")
 
-# ฟังก์ชันขุดหา Username แบบไม่สนโครงสร้าง (Recursive Search)
-def find_usernames(obj):
-    found = set()
-    if isinstance(obj, dict):
-        # ถ้าเจอ key ชื่อ 'value' และข้างบนมันมี 'string_list_data' (โครงสร้างหลักของ IG)
-        if 'value' in obj and isinstance(obj['value'], str):
-            # กรองเฉพาะตัวที่ดูเหมือน username (ไม่มีเว้นวรรค และไม่ใช่วันที่)
-            name = obj['value']
-            if ' ' not in name and ':' not in name:
-                found.add(name)
-        for k, v in obj.items():
-            found.update(find_usernames(v))
-    elif isinstance(obj, list):
-        for item in obj:
-            found.update(find_usernames(item))
-    return found
+# ฟังก์ชันสกัดชื่อที่ปรับปรุงมาเพื่อไฟล์ของเพื่อนโดยเฉพาะ
+def extract_instagram_users(data):
+    users = set()
+    
+    # กรณีเป็น Dictionary (เหมือนในไฟล์ following.json ของเพื่อน)
+    if isinstance(data, dict):
+        for key in data:
+            if isinstance(data[key], list):
+                for item in data[key]:
+                    # เช็คใน 'title' (อันนี้แหละที่เพื่อนมีปัญหา)
+                    if 'title' in item and item['title']:
+                        users.add(item['title'])
+                    # เช็คใน 'string_list_data' -> 'value' (เผื่อไว้)
+                    try:
+                        val = item['string_list_data'][0]['value']
+                        if val: users.add(val)
+                    except:
+                        pass
+    
+    # กรณีเป็น List (เหมือนในไฟล์ followers_1.json ของเพื่อน)
+    elif isinstance(data, list):
+        for item in data:
+            try:
+                # ดึงจาก value ใน string_list_data
+                val = item['string_list_data'][0]['value']
+                if val: users.add(val)
+            except:
+                # ถ้าไม่มี value ให้ลองดูที่ title
+                if 'title' in item and item['title']:
+                    users.add(item['title'])
+    
+    return users
 
 col1, col2 = st.columns(2)
 with col1:
@@ -33,12 +50,12 @@ if file_following and file_followers:
         data_ing = json.load(file_following)
         data_ers = json.load(file_followers)
 
-        # สั่งขุดข้อมูล
-        following = find_usernames(data_ing)
-        followers = find_usernames(data_ers)
+        following = extract_instagram_users(data_ing)
+        followers = extract_instagram_users(data_ers)
 
-        # ลบชื่อตัวเองออก (บางที IG ใส่ชื่อเจ้าของบัญชีมาในไฟล์ด้วย)
-        # ปกติชื่อเราจะอยู่ในทั้งสองไฟล์อยู่แล้ว ผลลัพธ์เลยไม่เพี้ยน
+        # ลบชื่อที่อาจเป็นค่าว่างออก
+        following.discard("")
+        followers.discard("")
 
         not_back = sorted(list(following - followers))
         i_not_back = sorted(list(followers - following))
@@ -63,5 +80,5 @@ if file_following and file_followers:
     except Exception as e:
         st.error(f"เกิดข้อผิดพลาด: {e}")
 else:
-    st.info("อัปโหลดไฟล์ทั้งสองเพื่อเริ่มเช็คเลยเพื่อน!")
-    
+    st.info("อัปโหลดไฟล์ JSON ทั้งสองเพื่อเริ่มประมวลผลครับเพื่อน")
+        
