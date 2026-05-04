@@ -4,20 +4,30 @@ import json
 # 1. ตั้งค่าหน้าเว็บให้ดูทันสมัย
 st.set_page_config(page_title="IG Insight Pro", page_icon="📸", layout="wide")
 
-# 2. ใส่ CSS ตกแต่งให้เหมือนแอปมือถือหรูๆ
-st.markdown("""
-    <style>
-    .main { background-color: #fafafa; }
-    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-    .user-card { 
-        padding: 12px; border-radius: 12px; background-color: white; 
-        margin-bottom: 10px; border-left: 6px solid #E1306C;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    /* ปรับแต่งกล่องตัวเลข Metric ให้โปร่งแสง */
+    [data-testid="stMetric"] {
+        background-color: rgba(128, 128, 128, 0.1) !important;
+        padding: 15px;
+        border-radius: 15px;
+        border: 1px solid rgba(128, 128, 128, 0.2);
     }
-    .stButton>button { width: 100%; border-radius: 10px; background-color: #E1306C; color: white; }
-    </style>
-    """, unsafe_allow_html=True)
-
+    /* ปรับแต่งการ์ดรายชื่อให้เป็นกระจกฝ้า (สวยทั้งขาว/ดำ) */
+    .user-card { 
+        padding: 12px; 
+        border-radius: 12px; 
+        background-color: rgba(128, 128, 128, 0.08) !important; 
+        margin-bottom: 10px; 
+        border-left: 6px solid #E1306C;
+        border-top: 1px solid rgba(128, 128, 128, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    /* ปรับสีตัวหนังสือให้สู้กับพื้นหลังโหมดมืด */
+    .user-link {
+        text-decoration: none;
+        font-weight: bold;
+        color: #E1306C !important;
+    }
+    small { color: inherit; opacity: 0.7; }
 st.title("📸 ยอดฟอล IG เรา")
 st.write("เช็คคนใจร้ายไม่ฟอลกลับ😠😠")
 
