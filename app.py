@@ -18,8 +18,8 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("📸 IG Follower Analytics Pro")
-st.write("เช็คคนไม่ฟอลกลับได้แม่นยำ ปลอดภัย ไม่ใช้รหัสผ่าน")
+st.title("📸 ยอดฟอล IG เรา")
+st.write("เช็คคนใจร้ายไม่ฟอลกลับ😠😠")
 
 # 3. ส่วนอัปโหลดไฟล์ (เอามาไว้ตรงกลางให้เห็นชัดๆ!)
 st.info("📌 ขั้นตอนแรก: อัปโหลดไฟล์ .json ของคุณที่นี่")
@@ -71,7 +71,7 @@ if file_ing and file_ers:
         m3.metric("ใจร้าย (ไม่ฟอลกลับ)", len(not_back))
 
         st.markdown("### 🔍 ผลการวิเคราะห์")
-        tab1, tab2 = st.tabs([f"❌ เขาไม่ฟอลเรา ({len(not_back)})", f"⚠️ เราไม่ฟอลเขา ({len(i_not_back)})"])
+        tab1, tab2 = st.tabs([f"❌ คนใจร้ายไม่ฟอลเรา😠 ({len(not_back)})", f"⚠️ เราไม่ฟอลเขา🥹 ({len(i_not_back)})"])
 
         with tab1:
             if not_back:
