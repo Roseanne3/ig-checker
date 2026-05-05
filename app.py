@@ -2,38 +2,21 @@ import streamlit as st
 import json
 
 # 1. ตั้งค่าหน้าเว็บ
-st.set_page_config(page_title="Multi-Check Pro", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Social Analytics Pro", page_icon="📊", layout="wide")
 
-# 2. ปรับแต่ง CSS ให้เหมาะกับมือถือ (Mobile First)
+# 2. CSS ตกแต่ง (Glassmorphism & Mobile Optimized)
 st.markdown("""
     <style>
-    /* ปรับปุ่มให้ใหญ่กดง่ายในมือถือ */
-    .stButton>button {
-        width: 100%;
-        height: 60px;
-        font-size: 18px;
-        border-radius: 15px;
-        margin-bottom: 10px;
-    }
-    /* ปรับแต่งการ์ดรายชื่อให้โปร่งแสงและดูดีในโหมดมืด */
+    .stButton>button { width: 100%; height: 60px; font-size: 18px; border-radius: 15px; margin-bottom: 10px; }
     .user-card { 
-        padding: 15px; 
-        border-radius: 12px; 
-        background-color: rgba(128, 128, 128, 0.1); 
-        margin-bottom: 10px; 
-        border-left: 6px solid #E1306C;
-        backdrop-filter: blur(10px);
+        padding: 15px; border-radius: 12px; background-color: rgba(128, 128, 128, 0.1); 
+        margin-bottom: 10px; border-left: 6px solid #fe2c55; backdrop-filter: blur(10px);
     }
-    /* ซ่อนขอบเขตที่รกๆ */
-    [data-testid="stMetric"] {
-        background-color: rgba(128, 128, 128, 0.05);
-        border-radius: 15px;
-        padding: 10px;
-    }
+    [data-testid="stMetric"] { background-color: rgba(128, 128, 128, 0.05); border-radius: 15px; padding: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. จัดการหน้า (Session State)
+# 3. จัดการ Session State สำหรับหน้า
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 
@@ -41,8 +24,8 @@ def go_to_page(page_name):
     st.session_state.page = page_name
     st.rerun()
 
-# --- ฟังก์ชันขุดข้อมูล ---
-def extract_users(data):
+# --- ฟังก์ชันสกัดชื่อ (แยกตามแพลตฟอร์ม) ---
+def extract_ig_users(data):
     users = set()
     if isinstance(data, dict):
         for key in data:
@@ -59,75 +42,73 @@ def extract_users(data):
     users.discard("")
     return users
 
+def extract_tiktok_users(data, list_key):
+    users = set()
+    if isinstance(data, dict) and list_key in data:
+        for item in data[list_key]:
+            if 'UserName' in item:
+                users.add(item['UserName'])
+    return users
+
 # --- หน้าแรก (HOME) ---
 if st.session_state.page == 'home':
-    st.title("🚀 Social Analytics")
-    st.write("เลือกแพลตฟอร์มที่ต้องการใช้งาน")
+    st.title("🚀 Social Analytics Hub")
+    st.subheader("เลือกแพลตฟอร์มที่ต้องการตรวจสอบ")
     
-    # บนมือถือใช้ columns แบบนี้จะช่วยให้ปุ่มไม่เบียดกันมาก
-    st.info("💡 แนะนำ: โหลดไฟล์ JSON จาก IG มาเตรียมไว้ก่อนนะ")
-    
-    if st.button("📸 Instagram Tracker"):
-        go_to_page('instagram')
-    
-    if st.button("🎵 TikTok Tracker (เร็วๆ นี้)"):
-        go_to_page('tiktok')
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("📸 Instagram Tracker"):
+            go_to_page('instagram')
+    with col2:
+        if st.button("🎵 TikTok Tracker"):
+            go_to_page('tiktok')
 
 # --- หน้า Instagram ---
 elif st.session_state.page == 'instagram':
-    # ปุ่มย้อนกลับแบบสะอาดๆ
-    if st.button("⬅️ กลับหน้าเลือกแพลตฟอร์ม"):
+    if st.button("⬅️ กลับหน้าหลัก"):
         go_to_page('home')
     
-    st.header("📸 Instagram Tracker")
-    st.write("อัปโหลดไฟล์เพื่อเริ่มการตรวจสอบ")
+    st.header("📸 Instagram Unfollow Tracker")
+    f_ing = st.file_uploader("📥 ใส่ไฟล์ following.json", type="json", key="ig_ing")
+    f_ers = st.file_uploader("📥 ใส่ไฟล์ followers_1.json", type="json", key="ig_ers")
 
-    # ส่วนอัปโหลด
-    file_ing = st.file_uploader("📥 ขั้นตอนที่ 1: ใส่ไฟล์ following.json", type="json")
-    file_ers = st.file_uploader("📥 ขั้นตอนที่ 2: ใส่ไฟล์ followers_1.json", type="json")
-
-    # โชว์ผลลัพธ์เฉพาะตอนที่มีไฟล์ครบเท่านั้น!
-    if file_ing and file_ers:
-        try:
-            data_ing = json.load(file_ing)
-            data_ers = json.load(file_ers)
-            ing = extract_users(data_ing)
-            ers = extract_users(data_ers)
-            
-            not_back = sorted(list(ing - ers))
-            i_not_back = sorted(list(ers - ing))
-
-            st.success("✅ วิเคราะห์เสร็จสิ้น!")
-            
-            # Metric โชว์เรียงกันสวยๆ
-            m1, m2, m3 = st.columns(3)
-            m1.metric("Following", len(ing))
-            m2.metric("Followers", len(ers))
-            m3.metric("ไม่ฟอลกลับ", len(not_back))
-
-            tab1, tab2 = st.tabs([f"❌ เขาไม่ตามเรา ({len(not_back)})", f"⚠️ เราไม่ตามเขา ({len(i_not_back)})"])
-
-            with tab1:
-                if not_back:
-                    for user in not_back:
-                        st.markdown(f'<div class="user-card"><b><a href="https://www.instagram.com/{user}/" target="_blank" style="color: #E1306C; text-decoration: none;">@{user}</a></b></div>', unsafe_allow_html=True)
-                else:
-                    st.write("ไม่มีคนที่ไม่ฟอลกลับ")
-
-            with tab2:
-                if i_not_back:
-                    for user in i_not_back:
-                        st.markdown(f'<div class="user-card" style="border-left-color: #28a745;"><b><a href="https://www.instagram.com/{user}/" target="_blank" style="color: #28a745; text-decoration: none;">@{user}</a></b></div>', unsafe_allow_html=True)
+    if f_ing and f_ers:
+        ing = extract_ig_users(json.load(f_ing))
+        ers = extract_ig_users(json.load(f_ers))
+        not_back = sorted(list(ing - ers))
         
-        except Exception as e:
-            st.error(f"เกิดข้อผิดพลาด: {e}")
-    else:
-        st.warning("รออัปโหลดไฟล์ให้ครบทั้ง 2 ช่องด้านบนครับ")
+        st.success(f"วิเคราะห์เสร็จสิ้น! พบคนไม่ฟอลกลับ {len(not_back)} คน")
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Following", len(ing))
+        m2.metric("Followers", len(ers))
+        m3.metric("ไม่ฟอลกลับ", len(not_back))
+
+        for user in not_back:
+            st.markdown(f'<div class="user-card" style="border-left-color: #E1306C;"><b><a href="https://www.instagram.com/{user}/" target="_blank" style="color: #E1306C; text-decoration: none;">@{user}</a></b></div>', unsafe_allow_html=True)
 
 # --- หน้า TikTok ---
 elif st.session_state.page == 'tiktok':
-    if st.button("⬅️ กลับ"):
+    if st.button("⬅️ กลับหน้าหลัก"):
         go_to_page('home')
-    st.title("🎵 TikTok Analytics")
-    st.write("ฟีเจอร์นี้กำลังถูกพัฒนา... อดใจรอหน่อยนะเพื่อน!")
-                                   
+    
+    st.header("🎵 TikTok Unfollow Tracker")
+    st.info("💡 วิธีได้ไฟล์: TikTok > Settings > Account > Download your data > เลือก JSON")
+    
+    f_ing = st.file_uploader("📥 ใส่ไฟล์ Following List.json", type="json", key="tt_ing")
+    f_ers = st.file_uploader("📥 ใส่ไฟล์ Follower List.json", type="json", key="tt_ers")
+
+    if f_ing and f_ers:
+        ing = extract_tiktok_users(json.load(f_ing), "Following List")
+        ers = extract_tiktok_users(json.load(f_ers), "Follower List")
+        not_back = sorted(list(ing - ers))
+        
+        st.success(f"วิเคราะห์เสร็จสิ้น! พบคนไม่ฟอลกลับ {len(not_back)} คน")
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Following", len(ing))
+        m2.metric("Followers", len(ers))
+        m3.metric("ไม่ฟอลกลับ", len(not_back))
+
+        for user in not_back:
+            # ลิงก์ TikTok จะเป็น tiktok.com/@username
+            st.markdown(f'<div class="user-card" style="border-left-color: #fe2c55;"><b><a href="https://www.tiktok.com/@{user}" target="_blank" style="color: #fe2c55; text-decoration: none;">@{user}</a></b></div>', unsafe_allow_html=True)
+        
